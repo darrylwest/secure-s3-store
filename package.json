@@ -10,6 +10,7 @@
     "build": "tsc",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
     "test": "jest",
     "start": "ts-node src/index.ts",
     "e2e": "ts-node e2e/e2e-test.ts"
