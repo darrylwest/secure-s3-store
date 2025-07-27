@@ -8,6 +8,7 @@ import {
   DeleteObjectCommand,
   ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
+import { RequestHandler } from '@aws-sdk/types';
 import winston from 'winston';
 import logger from './logger.js';
 
@@ -18,6 +19,7 @@ export interface SecureS3StoreConfig {
   s3Config: S3ClientConfig;
   logger?: winston.Logger;
   maxFileSize?: number;
+  requestHandler?: RequestHandler<any, any>;
 }
 
 export class ValidationError extends Error {
@@ -83,7 +85,10 @@ export class SecureS3Store {
     this.secretKey = Buffer.from(config.secretKey, 'hex');
 
     // Initialize S3 Client
-    this.s3Client = new S3Client(config.s3Config);
+    this.s3Client = new S3Client({
+      ...config.s3Config,
+      requestHandler: config.requestHandler,
+    });
     this.logger = config.logger || logger;
     this.maxFileSize = config.maxFileSize || 100 * 1024 * 1024; // 100MB default
     this.logger.info('SecureS3Store initialized.');

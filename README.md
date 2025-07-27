@@ -73,6 +73,8 @@ The `SecureS3Store` is initialized with a configuration object with the followin
 -   `secretKey` (string, required): A **64-character** hexadecimal string representing a 32-byte encryption key.
 -   `s3Config` (object, required): An S3 client configuration object, passed directly to the `@aws-sdk/client-s3` constructor. See the [AWS S3 Client documentation](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/classes/_aws_sdk_client_s3.S3Client.html) for all available options.
 -   `logger` (object, optional): A `winston` logger instance. If not provided, a default logger (console and rotating file) will be used.
+-   `maxFileSize` (number, optional): The maximum file size in bytes. Defaults to 100MB.
+-   `requestHandler` (object, optional): An AWS SDK `RequestHandler` instance. This can be used to configure advanced connection options, such as connection pooling.
 
 ### Logging
 
@@ -90,6 +92,31 @@ const myLogger = configureLogger({
 const config: SecureS3StoreConfig = {
   // ... other config
   logger: myLogger,
+};
+
+const store = new SecureS3Store(config);
+```
+
+### Connection Pooling
+
+The underlying AWS S3 client automatically reuses TCP connections. For advanced use cases, you can provide a custom `requestHandler` to fine-tune the connection pool behavior (e.g., `maxSockets`).
+
+```typescript
+import { NodeHttpHandler } from '@aws-sdk/node-http-handler';
+import { Agent } from 'https';
+
+const agent = new Agent({
+  maxSockets: 50, // Allow up to 50 concurrent connections
+});
+
+const requestHandler = new NodeHttpHandler({
+  httpAgent: agent,
+  httpsAgent: agent,
+});
+
+const config: SecureS3StoreConfig = {
+  // ... other config
+  requestHandler: requestHandler,
 };
 
 const store = new SecureS3Store(config);
