@@ -4,7 +4,7 @@
 
 ### 1.1 Project Goal
 
-To create a simple, secure, and developer-friendly npm package for storing and retrieving encrypted data from any S3-compatible object storage service (e.g., AWS S3, DigitalOcean Spaces).
+To create a simple, secure, and developer-friendly npm package for storing and retrieving encrypted data from any S3-compatible object storage service (e.g., AWS S3, DigitalOcean Spaces). And, create a REST API to enable use as a language independent micro-service.
 
 ### 1.2 Problem Statement
 
