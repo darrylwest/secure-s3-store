@@ -1,5 +1,13 @@
 # Secure S3 Store
 
+```
+ _______                                _______ ______   _______ __                    
+|     __|.-----.----.--.--.----.-----. |     __|__    | |     __|  |_.-----.----.-----.
+|__     ||  -__|  __|  |  |   _|  -__| |__     |__    | |__     |   _|  _  |   _|  -__|
+|_______||_____|____|_____|__| |_____| |_______|______| |_______|____|_____|__| |_____|
+
+```
+
 A simple, secure, and developer-friendly npm package for storing and retrieving encrypted data from any S3-compatible object storage service (e.g., AWS S3, DigitalOcean Spaces).
 
 This library abstracts away the complexity of encrypting data and interacting with the S3 API into a single, intuitive, file-system-like interface.
