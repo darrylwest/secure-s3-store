@@ -103,7 +103,7 @@ export class SecureS3Store {
    */
   async put(path: string, data: Buffer | string): Promise<void> {
     this.logger.info(`Attempting to put object at path: ${path}`);
-    const { bucket, key } = this.parsePath(path);
+    const { bucket, key } = SecureS3Store.parsePath(path);
     const dataBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data, 'utf8');
 
     this.validateInput(dataBuffer);
@@ -144,7 +144,7 @@ export class SecureS3Store {
    */
   async get(path: string): Promise<Buffer> {
     this.logger.info(`Attempting to get object from path: ${path}`);
-    const { bucket, key } = this.parsePath(path);
+    const { bucket, key } = SecureS3Store.parsePath(path);
 
     const command = new GetObjectCommand({
       Bucket: bucket,
@@ -191,7 +191,7 @@ export class SecureS3Store {
    */
   async delete(path: string): Promise<void> {
     this.logger.info(`Attempting to delete object at path: ${path}`);
-    const { bucket, key } = this.parsePath(path);
+    const { bucket, key } = SecureS3Store.parsePath(path);
 
     const command = new DeleteObjectCommand({
       Bucket: bucket,
@@ -224,7 +224,7 @@ export class SecureS3Store {
     recursive = false,
   ): Promise<string[]> {
     this.logger.info(`Attempting to list objects at path: ${path}`);
-    const { bucket, key: prefix } = this.parsePath(path);
+    const { bucket, key: prefix } = SecureS3Store.parsePath(path);
     const allKeys: string[] = [];
     let continuationToken: string | undefined;
 
@@ -279,7 +279,7 @@ export class SecureS3Store {
     });
   }
 
-  private parsePath(path: string): { bucket: string; key: string } {
+  static parsePath(path: string): { bucket: string; key: string } {
     if (!path || typeof path !== 'string') {
       throw new ValidationError('Path must be a non-empty string.');
     }

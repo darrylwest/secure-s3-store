@@ -38,15 +38,26 @@ describe('SecureS3Store', () => {
     );
   });
 
-  it.each([['bucket/'], ['/key'], ['bucket'], [''], [null]])(
-    'should throw a ValidationError for invalid path: %s',
-    async (path) => {
-      const store = new SecureS3Store({
-        secretKey: 'a'.repeat(64),
-        s3Config: {},
-      });
+  describe('parsePath', () => {
+    it.each([
+      ['bucket/'],
+      ['/key'],
+      ['bucket'],
+      [''],
+      [null],
+      [undefined],
+      [123],
+    ])('should throw a ValidationError for invalid path: %s', (path) => {
       // @ts-expect-error: Testing invalid input types
-      await expect(store.put(path, 'my-data')).rejects.toThrow(ValidationError);
-    },
-  );
+      expect(() => SecureS3Store.parsePath(path)).toThrow(ValidationError);
+    });
+
+    it('should correctly parse a valid path', () => {
+      const { bucket, key } = SecureS3Store.parsePath(
+        'my-bucket/my-folder/my-file.txt',
+      );
+      expect(bucket).toBe('my-bucket');
+      expect(key).toBe('my-folder/my-file.txt');
+    });
+  });
 });
