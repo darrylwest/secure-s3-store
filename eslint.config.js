@@ -5,7 +5,7 @@ import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 
 export default [
   {
-    ignores: ["dist/**/*", "**/*.js"],
+    ignores: ['dist/**/*', '**/*.js'],
   },
   {
     languageOptions: {
