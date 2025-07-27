@@ -2,7 +2,12 @@
   "name": "secure-s3-store",
   "version": "1.0.2",
   "description": "a secure way to store s3 files",
-  "main": "index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./logger": "./dist/logger.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "directories": {
     "doc": "docs"
   },
