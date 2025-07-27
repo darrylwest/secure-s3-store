@@ -4,6 +4,8 @@
 
 **1.1. Project Goal:** To create a simple, secure, and developer-friendly npm package for storing and retrieving encrypted data from any S3-compatible object storage service (e.g., AWS S3, DigitalOcean Spaces).
 
+**1.1.1 Secondary Goal** To create an express REST interface to enable other services, possibly non-typescript, language independent access to the secure S3 storage.
+
 **1.2. Problem Statement:** Developers often need to store sensitive data blobs (e.g., API keys, user-uploaded content, configuration files) in object storage. This requires two distinct and complex steps: robustly encrypting the data and correctly interacting with the S3 API. This package will abstract away that complexity into a single, intuitive API.
 
 **1.3. Target Audience:** Node.js/TypeScript developers who need a simple "set and forget" solution for securely managing data in S3 without becoming experts in cryptography or the AWS SDK.
@@ -83,7 +85,6 @@ const store = new SecureS3Store({
 ### 5. Out of Scope (for V1)
 
 *   **Key Rotation:** The library will not manage key rotation; the user provides a single key on initialization.
-*   **CLI Tool:** This is a library/SDK, not a command-line tool.
 *   **Large File Support (Multi-part Uploads):** V1 will focus on objects that can be handled in memory. Streaming and multi-part uploads can be considered for a future release.
 *   **Advanced S3 Features:** Does not expose underlying S3 features like versioning, lifecycle policies, or bucket creation.
 
