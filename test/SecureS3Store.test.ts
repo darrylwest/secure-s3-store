@@ -7,7 +7,7 @@ import {
   ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
-import { SecureS3Store } from '../src/SecureS3Store.js';
+import { SecureS3Store, ValidationError } from '../src/SecureS3Store.js';
 import { Readable } from 'stream';
 import { SdkStream } from '@aws-sdk/types';
 
@@ -116,5 +116,41 @@ describe('SecureS3Store', () => {
     expect(callInput.Bucket).toBe('my-bucket');
     expect(callInput.Prefix).toBe('my-folder/');
     expect(result).toEqual(['my-folder/my-key1', 'my-folder/my-key2']);
+  });
+
+  // Error handling tests
+  it('should throw a ValidationError for an invalid secret key', () => {
+    expect(() => {
+      new SecureS3Store({
+        secretKey: 'invalid-key',
+        s3Config: {},
+      });
+    }).toThrow(ValidationError);
+  });
+
+  it('should throw a ValidationError for an invalid path', async () => {
+    const store = new SecureS3Store({
+      secretKey: 'a'.repeat(64),
+      s3Config: {},
+    });
+    await expect(store.put('invalid-path', 'my-data')).rejects.toThrow(ValidationError);
+  });
+
+  it('should throw an S3Error when the put operation fails', async () => {
+    const store = new SecureS3Store({
+      secretKey: 'a'.repeat(64),
+      s3Config: {},
+    });
+    s3Mock.on(PutObjectCommand).rejects(new Error('S3 Error'));
+    await expect(store.put('my-bucket/my-key', 'my-data')).rejects.toThrow('S3 PutObject failed: S3 Error');
+  });
+
+  it('should throw a NotFoundError when the get operation fails with NoSuchKey', async () => {
+    const store = new SecureS3Store({
+      secretKey: 'a'.repeat(64),
+      s3Config: {},
+    });
+    s3Mock.on(GetObjectCommand).rejects({ name: 'NoSuchKey' });
+    await expect(store.get('my-bucket/my-key')).rejects.toThrow('Object not found at path: my-bucket/my-key');
   });
 });
