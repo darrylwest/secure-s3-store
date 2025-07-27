@@ -15,7 +15,7 @@ The package will expose a `SecureS3Store` class with the following methods:
 *   `delete(path: string): Promise<void>`: Deletes an object.
 *   `list(path: string, recursive: boolean = true): Promise<string[]>`: Lists objects in a "folder."
 
-The `path` string is always in the format `bucket-name/folder/filename.ext`.
+The `path` string is always in the format `bucket-name/folder/filename.ext` where bucket-name is usually stored in .env properites file.
 
 ## 3. Key Technical Decisions
 
@@ -34,7 +34,7 @@ The project will be set up as a standard npm package. The initial scaffolding pl
 2.  Install dependencies: `libsodium-wrappers`, `@aws-sdk/client-s3`.
 3.  Install dev dependencies: `typescript`, `@types/node`, `ts-node`, etc.
 4.  Initialize a `tsconfig.json`.
-5.  Other depandencies include eslint, prettier, jest, zod, dotenvx, **logger?**
+5.  Other depandencies include eslint, prettier, jest, zod, dotenvx, tsc, winston, winston, winston-daily-rotate-file
 6.  The express application will run using pm2 with 3 or 4 instances
 
 ## 5. V1 Scope Limitations
