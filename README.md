@@ -70,11 +70,30 @@ main();
 
 The `SecureS3Store` is initialized with a configuration object with the following properties:
 
--   `secretKey` (string, required): A **64-character** hexadecimal string representing a 32-byte encryption key.
+-   `keys` (object, required): An object where each key is a Key Identifier (KID) and the value is the 64-character hex-encoded secret key.
+-   `primaryKey` (string, required): The KID of the key that should be used for all new encryption operations.
 -   `s3Config` (object, required): An S3 client configuration object, passed directly to the `@aws-sdk/client-s3` constructor. See the [AWS S3 Client documentation](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/classes/_aws_sdk_client_s3.S3Client.html) for all available options.
 -   `logger` (object, optional): A `winston` logger instance. If not provided, a default logger (console and rotating file) will be used.
 -   `maxFileSize` (number, optional): The maximum file size in bytes. Defaults to 100MB.
 -   `requestHandler` (object, optional): An AWS SDK `RequestHandler` instance. This can be used to configure advanced connection options, such as connection pooling.
+
+### Key Rotation
+
+This library supports seamless key rotation. You can configure multiple keys and designate one as the "primary" key for new encryptions.
+
+**How it Works:**
+
+-   **Encryption (`put`)**: The `put` method will always use the key designated as the `primaryKey` to encrypt new data.
+-   **Decryption (`get`)**: When you `get` an object, the library reads a Key Identifier (KID) that is embedded in the encrypted data. It then uses that KID to find the correct key in your `keys` configuration to decrypt the data.
+
+This means that decryption is **not** tied to the `primaryKey`. As long as the old key is still present in the `keys` object, the library can decrypt data that was encrypted with it, even after you have rotated to a new primary key.
+
+**To Rotate Keys:**
+
+1.  Add your new key to the `keys` object with a new KID.
+2.  Update the `primaryKey` to point to your new KID.
+
+Your application can now encrypt new data with the new key and still decrypt old data with the old key, all with zero downtime.
 
 ### Logging
 
