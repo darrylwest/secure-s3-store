@@ -3,7 +3,7 @@
 import 'dotenvx/config';
 import { SecureS3Store, SecureS3StoreConfig } from '../src/SecureS3Store';
 
-const BUCKET = 'gemini-secure-s3-store-test';
+const BUCKET = process.env.BUCKET!;
 
 const config: SecureS3StoreConfig = {
   secretKey: process.env.SALT_PIPE_KEY!,
