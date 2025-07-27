@@ -24,7 +24,7 @@ export function configureLogger(config: LoggerConfig = {}): winston.Logger {
 
   const dailyRotateFileTransport = new winston.transports.DailyRotateFile({
     level: fileLogLevel,
-    filename: path.join(logDir, '%DATE%-solt-pipe.log'),
+    filename: path.join(logDir, 'salt-pipe-%DATE%.log'),
     datePattern: 'YYYY-MM-DD',
     zippedArchive: true,
     maxSize: '20m',

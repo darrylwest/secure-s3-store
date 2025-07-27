@@ -8,3 +8,4 @@
 .env.keys
 
 logs/*.log
+logs/*.json

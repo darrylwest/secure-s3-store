@@ -6,7 +6,7 @@ import { configureLogger } from '../src/logger.js';
 const BUCKET = process.env.BUCKET!;
 
 const logger = configureLogger({
-  consoleLogLevel: 'info',
+  consoleLogLevel: 'error',
   fileLogLevel: 'info',
 });
 
