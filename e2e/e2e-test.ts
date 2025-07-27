@@ -6,13 +6,13 @@ import { SecureS3Store, SecureS3StoreConfig } from '../src/SecureS3Store';
 const BUCKET = 'gemini-secure-s3-store-test';
 
 const config: SecureS3StoreConfig = {
-  secretKey: process.env.MY_SECRET_KEY!,
+  secretKey: process.env.SALT_PIPE_KEY!,
   s3Config: {
     endpoint: `https://sfo3.digitaloceanspaces.com`,
     region: 'sfo3',
     credentials: {
-      accessKeyId: process.env.S3_ACCESS_KEY!,
-      secretAccessKey: process.env.S3_SECRET_KEY!,
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
     },
   },
 };
