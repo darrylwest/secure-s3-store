@@ -5,4 +5,4 @@
 /dist
 
 # Environment variables
-.env
+.env.keys
