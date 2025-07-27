@@ -17,6 +17,7 @@ export interface SecureS3StoreConfig {
   secretKey: string; // Hex-encoded 32-byte key (64 hex characters)
   s3Config: S3ClientConfig;
   logger?: winston.Logger;
+  maxFileSize?: number;
 }
 
 export class ValidationError extends Error {
@@ -66,6 +67,7 @@ export class SecureS3Store {
   private readonly ivLength = 16;
   private readonly authTagLength = 16;
   private readonly logger: winston.Logger;
+  private readonly maxFileSize: number;
 
   /**
    * Creates an instance of SecureS3Store.
@@ -83,6 +85,7 @@ export class SecureS3Store {
     // Initialize S3 Client
     this.s3Client = new S3Client(config.s3Config);
     this.logger = config.logger || logger;
+    this.maxFileSize = config.maxFileSize || 100 * 1024 * 1024; // 100MB default
     this.logger.info('SecureS3Store initialized.');
   }
 
@@ -98,9 +101,7 @@ export class SecureS3Store {
     const { bucket, key } = this.parsePath(path);
     const dataBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data, 'utf8');
 
-    if (dataBuffer.length === 0) {
-      throw new ValidationError('Data cannot be empty.');
-    }
+    this.validateInput(dataBuffer);
 
     const iv = randomBytes(this.ivLength);
     const cipher = createCipheriv(this.algorithm, this.secretKey, iv);
@@ -249,6 +250,18 @@ export class SecureS3Store {
       const error = err as Error;
       this.logger.error(`S3 ListObjectsV2 failed for path: ${path}`, { error });
       throw new S3Error(`S3 ListObjectsV2 failed: ${error.message}`);
+    }
+  }
+
+  private validateInput(data: Buffer): void {
+    if (data.length === 0) {
+      throw new ValidationError('Input data cannot be null or empty');
+    }
+
+    if (data.length > this.maxFileSize) {
+      throw new ValidationError(
+        `File size of ${data.length} bytes exceeds maximum limit of ${this.maxFileSize} bytes`,
+      );
     }
   }
 

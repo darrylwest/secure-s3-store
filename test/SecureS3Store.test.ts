@@ -159,4 +159,25 @@ describe('SecureS3Store', () => {
       'Object not found at path: my-bucket/my-key',
     );
   });
+
+  it('should throw a ValidationError for empty data', async () => {
+    const store = new SecureS3Store({
+      secretKey: 'a'.repeat(64),
+      s3Config: {},
+    });
+    await expect(store.put('my-bucket/my-key', '')).rejects.toThrow(
+      ValidationError,
+    );
+  });
+
+  it('should throw a ValidationError for data exceeding maxFileSize', async () => {
+    const store = new SecureS3Store({
+      secretKey: 'a'.repeat(64),
+      s3Config: {},
+      maxFileSize: 10,
+    });
+    await expect(store.put('my-bucket/my-key', 'a'.repeat(11))).rejects.toThrow(
+      ValidationError,
+    );
+  });
 });

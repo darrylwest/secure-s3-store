@@ -9,3 +9,4 @@ export {
   NotFoundError,
 } from './SecureS3Store.js';
 export { configureLogger, LoggerConfig } from './logger.js';
+export { getVersion } from './version.js';
