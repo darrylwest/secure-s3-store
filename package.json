@@ -30,7 +30,6 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.850.0",
     "@dotenvx/dotenvx": "^1.48.3",
-    "libsodium-wrappers": "^0.7.15",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0",
     "yargs": "^18.0.0",

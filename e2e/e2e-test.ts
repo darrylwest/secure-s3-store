@@ -16,12 +16,12 @@ const config: SecureS3StoreConfig = {
   },
 };
 
+const store = new SecureS3Store(config);
+
 async function main() {
   console.log('Starting e2e test for SecureS3Store...');
 
   try {
-    const store = await SecureS3Store.create(config);
-
     const testData = `Hello, world! This is a test. ${new Date().toISOString()}`;
     const testPath = `${BUCKET}/test-folder/test-file.txt`;
     const testDataBuffer = Buffer.from(testData, 'utf8');

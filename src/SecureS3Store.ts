@@ -1,4 +1,5 @@
 import { Readable } from 'stream';
+import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import {
   S3Client,
   S3ClientConfig,
@@ -7,7 +8,6 @@ import {
   DeleteObjectCommand,
   ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
-import libsodium from 'libsodium-wrappers';
 
 // -- Configuration and Error Types --
 
@@ -49,8 +49,11 @@ export class NotFoundError extends Error {
 export class SecureS3Store {
   private readonly s3Client: S3Client;
   private readonly secretKey: Buffer;
+  private readonly algorithm = 'aes-256-gcm';
+  private readonly ivLength = 16;
+  private readonly authTagLength = 16;
 
-  private constructor(private readonly config: SecureS3StoreConfig) {
+  constructor(private readonly config: SecureS3StoreConfig) {
     // Validate secret key
     if (!/^[0-9a-fA-F]{64}$/.test(config.secretKey)) {
       throw new ValidationError(
@@ -63,11 +66,6 @@ export class SecureS3Store {
     this.s3Client = new S3Client(config.s3Config);
   }
 
-  static async create(config: SecureS3StoreConfig): Promise<SecureS3Store> {
-    await libsodium.ready;
-    return new SecureS3Store(config);
-  }
-
   async put(path: string, data: Buffer | string): Promise<void> {
     const { bucket, key } = this.parsePath(path);
     const dataBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data, 'utf8');
@@ -76,18 +74,12 @@ export class SecureS3Store {
       throw new ValidationError('Data cannot be empty.');
     }
 
-    const nonce = libsodium.randombytes_buf(
-      libsodium.crypto_aead_aes256gcm_NPUBBYTES,
-    );
-    const ciphertext = libsodium.crypto_aead_aes256gcm_encrypt(
-      dataBuffer,
-      null,
-      null,
-      nonce,
-      this.secretKey,
-    );
+    const iv = randomBytes(this.ivLength);
+    const cipher = createCipheriv(this.algorithm, this.secretKey, iv);
+    const encrypted = Buffer.concat([cipher.update(dataBuffer), cipher.final()]);
+    const authTag = cipher.getAuthTag();
 
-    const finalPayload = Buffer.concat([nonce, Buffer.from(ciphertext)]);
+    const finalPayload = Buffer.concat([iv, authTag, encrypted]);
 
     const command = new PutObjectCommand({
       Bucket: bucket,
@@ -118,23 +110,16 @@ export class SecureS3Store {
       }
 
       const encryptedData = await this.streamToBuffer(Body as Readable);
-      const nonce = encryptedData.slice(
-        0,
-        libsodium.crypto_aead_aes256gcm_NPUBBYTES,
-      );
-      const ciphertext = encryptedData.slice(
-        libsodium.crypto_aead_aes256gcm_NPUBBYTES,
-      );
+      const iv = encryptedData.slice(0, this.ivLength);
+      const authTag = encryptedData.slice(this.ivLength, this.ivLength + this.authTagLength);
+      const encrypted = encryptedData.slice(this.ivLength + this.authTagLength);
 
-      const decrypted = libsodium.crypto_aead_aes256gcm_decrypt(
-        ciphertext,
-        null,
-        null,
-        nonce,
-        this.secretKey,
-      );
+      const decipher = createDecipheriv(this.algorithm, this.secretKey, iv);
+      decipher.setAuthTag(authTag);
 
-      return Buffer.from(decrypted);
+      const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
+
+      return decrypted;
     } catch (err) {
       const error = err as Error;
       if (error.name === 'NoSuchKey') {

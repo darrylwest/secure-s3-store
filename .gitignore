@@ -6,3 +6,5 @@
 
 # Environment variables
 .env.keys
+
+logs/*
