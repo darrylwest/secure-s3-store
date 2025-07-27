@@ -49,6 +49,16 @@ export class NotFoundError extends Error {
 
 // -- SecureS3Store Class --
 
+/**
+ * Provides a simple, file-system-like API for securely storing and retrieving
+ * encrypted data from S3-compatible object storage.
+ *
+ * @remarks
+ * Encryption is performed using AES-256-GCM. For each `put` operation, a new
+ * 16-byte Initialization Vector (IV) is generated. The final object stored in S3
+ * is a concatenation of `[IV (16 bytes)][AuthTag (16 bytes)][Encrypted Data]`.
+ * The authentication tag, provided by GCM, ensures data integrity and authenticity.
+ */
 export class SecureS3Store {
   private readonly s3Client: S3Client;
   private readonly secretKey: Buffer;
@@ -57,6 +67,10 @@ export class SecureS3Store {
   private readonly authTagLength = 16;
   private readonly logger: winston.Logger;
 
+  /**
+   * Creates an instance of SecureS3Store.
+   * @param config - The configuration object for the store.
+   */
   constructor(private readonly config: SecureS3StoreConfig) {
     // Validate secret key
     if (!/^[0-9a-fA-F]{64}$/.test(config.secretKey)) {
@@ -72,6 +86,13 @@ export class SecureS3Store {
     this.logger.info('SecureS3Store initialized.');
   }
 
+  /**
+   * Encrypts and uploads data to the specified S3 path.
+   * @param path - The full S3 path, including bucket and key (e.g., `bucket-name/folder/file.ext`).
+   * @param data - The data to store, as a Buffer or a UTF-8 string.
+   * @throws {ValidationError} If the path is invalid or data is empty.
+   * @throws {S3Error} If the S3 upload fails.
+   */
   async put(path: string, data: Buffer | string): Promise<void> {
     this.logger.info(`Attempting to put object at path: ${path}`);
     const { bucket, key } = this.parsePath(path);
@@ -107,6 +128,14 @@ export class SecureS3Store {
     }
   }
 
+  /**
+   * Downloads and decrypts data from the specified S3 path.
+   * @param path - The full S3 path, including bucket and key (e.g., `bucket-name/folder/file.ext`).
+   * @returns A Promise that resolves with the decrypted data as a Buffer.
+   * @throws {NotFoundError} If the object is not found at the specified path.
+   * @throws {S3Error} If the S3 download fails.
+   * @throws {DecryptionError} If the data cannot be decrypted (e.g., wrong key or tampered data).
+   */
   async get(path: string): Promise<Buffer> {
     this.logger.info(`Attempting to get object from path: ${path}`);
     const { bucket, key } = this.parsePath(path);
@@ -149,6 +178,11 @@ export class SecureS3Store {
     }
   }
 
+  /**
+   * Deletes an object from the specified S3 path.
+   * @param path - The full S3 path, including bucket and key (e.g., `bucket-name/folder/file.ext`).
+   * @throws {S3Error} If the S3 delete operation fails.
+   */
   async delete(path: string): Promise<void> {
     this.logger.info(`Attempting to delete object at path: ${path}`);
     const { bucket, key } = this.parsePath(path);
@@ -168,6 +202,15 @@ export class SecureS3Store {
     }
   }
 
+  /**
+   * Lists the objects within a specified bucket and prefix.
+   * @param path - The S3 path to list, including the bucket and an optional prefix (e.g., `bucket-name/folder/`).
+   * @param offset - The starting offset for the listing.
+   * @param limit - The maximum number of items to return.
+   * @param recursive - If true, lists objects in all subdirectories. If false, only lists immediate children.
+   * @returns A Promise that resolves with an array of object keys.
+   * @throws {S3Error} If the S3 list operation fails.
+   */
   async list(
     path: string,
     offset = 0,

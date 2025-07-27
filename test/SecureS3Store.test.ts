@@ -133,7 +133,9 @@ describe('SecureS3Store', () => {
       secretKey: 'a'.repeat(64),
       s3Config: {},
     });
-    await expect(store.put('invalid-path', 'my-data')).rejects.toThrow(ValidationError);
+    await expect(store.put('invalid-path', 'my-data')).rejects.toThrow(
+      ValidationError,
+    );
   });
 
   it('should throw an S3Error when the put operation fails', async () => {
@@ -142,7 +144,9 @@ describe('SecureS3Store', () => {
       s3Config: {},
     });
     s3Mock.on(PutObjectCommand).rejects(new Error('S3 Error'));
-    await expect(store.put('my-bucket/my-key', 'my-data')).rejects.toThrow('S3 PutObject failed: S3 Error');
+    await expect(store.put('my-bucket/my-key', 'my-data')).rejects.toThrow(
+      'S3 PutObject failed: S3 Error',
+    );
   });
 
   it('should throw a NotFoundError when the get operation fails with NoSuchKey', async () => {
@@ -151,6 +155,8 @@ describe('SecureS3Store', () => {
       s3Config: {},
     });
     s3Mock.on(GetObjectCommand).rejects({ name: 'NoSuchKey' });
-    await expect(store.get('my-bucket/my-key')).rejects.toThrow('Object not found at path: my-bucket/my-key');
+    await expect(store.get('my-bucket/my-key')).rejects.toThrow(
+      'Object not found at path: my-bucket/my-key',
+    );
   });
 });
