@@ -7,6 +7,7 @@
     "doc": "docs"
   },
   "scripts": {
+    "clean": "rm -rf dist logs/*.log logs/*.json",
     "build": "tsc",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -40,11 +41,14 @@
     "@types/libsodium-wrappers": "^0.7.14",
     "@types/node": "^24.1.0",
     "@types/yargs": "^17.0.33",
+    "aws-sdk-client-mock": "^4.1.0",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.3",
     "jest": "^30.0.5",
+    "jest-mock-extended": "^4.0.0",
     "prettier": "^3.6.2",
+    "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0"
