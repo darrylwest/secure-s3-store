@@ -1,3 +1,4 @@
+import { Readable } from 'stream';
 import {
   S3Client,
   S3ClientConfig,
@@ -94,7 +95,8 @@ export class SecureS3Store {
     try {
       await this.s3Client.send(command);
     } catch (err) {
-      throw new S3Error(`S3 PutObject failed: ${err.message}`);
+      const error = err as Error;
+      throw new S3Error(`S3 PutObject failed: ${error.message}`);
     }
   }
 
@@ -114,7 +116,7 @@ export class SecureS3Store {
         throw new NotFoundError(`Object not found at path: ${path}`);
       }
 
-      const encryptedData = await this.streamToBuffer(Body);
+      const encryptedData = await this.streamToBuffer(Body as Readable);
       const nonce = encryptedData.slice(
         0,
         libsodium.crypto_aead_aes256gcm_NPUBBYTES,
@@ -133,10 +135,11 @@ export class SecureS3Store {
 
       return Buffer.from(decrypted);
     } catch (err) {
-      if (err.name === 'NoSuchKey') {
+      const error = err as Error;
+      if (error.name === 'NoSuchKey') {
         throw new NotFoundError(`Object not found at path: ${path}`);
       }
-      throw new S3Error(`S3 GetObject failed: ${err.message}`);
+      throw new S3Error(`S3 GetObject failed: ${error.message}`);
     }
   }
 
@@ -151,7 +154,8 @@ export class SecureS3Store {
     try {
       await this.s3Client.send(command);
     } catch (err) {
-      throw new S3Error(`S3 DeleteObject failed: ${err.message}`);
+      const error = err as Error;
+      throw new S3Error(`S3 DeleteObject failed: ${error.message}`);
     }
   }
 
@@ -174,11 +178,11 @@ export class SecureS3Store {
           ContinuationToken: continuationToken,
         });
         const response = await this.s3Client.send(command);
-        
+
         if (response.Contents) {
-          const keys = response.Contents.map((obj) => obj.Key || '').filter(
-            (key) => key && key.endsWith('.enc'),
-          ).map((key) => key.slice(0, -4));
+          const keys = response.Contents.map((obj) => obj.Key || '')
+            .filter((key) => key && key.endsWith('.enc'))
+            .map((key) => key.slice(0, -4));
           allKeys.push(...keys);
         }
         continuationToken = response.NextContinuationToken;
@@ -186,11 +190,12 @@ export class SecureS3Store {
 
       return allKeys.slice(offset, offset + limit);
     } catch (err) {
-      throw new S3Error(`S3 ListObjectsV2 failed: ${err.message}`);
+      const error = err as Error;
+      throw new S3Error(`S3 ListObjectsV2 failed: ${error.message}`);
     }
   }
 
-  private async streamToBuffer(stream: any): Promise<Buffer> {
+  private async streamToBuffer(stream: Readable): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       const chunks: Buffer[] = [];
       stream.on('data', (chunk: Buffer) => chunks.push(chunk));
