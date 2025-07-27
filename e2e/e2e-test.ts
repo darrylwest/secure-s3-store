@@ -11,7 +11,10 @@ const logger = configureLogger({
 });
 
 const config: SecureS3StoreConfig = {
-  secretKey: process.env.SALT_PIPE_KEY!,
+  keys: {
+    v1: process.env.SALT_PIPE_KEY!,
+  },
+  primaryKey: 'v1',
   s3Config: {
     endpoint: `https://sfo3.digitaloceanspaces.com`,
     region: 'sfo3',

@@ -15,7 +15,8 @@ import logger from './logger.js';
 // -- Configuration and Error Types --
 
 export interface SecureS3StoreConfig {
-  secretKey: string; // Hex-encoded 32-byte key (64 hex characters)
+  keys: { [kid: string]: string };
+  primaryKey: string;
   s3Config: S3ClientConfig;
   logger?: winston.Logger;
   maxFileSize?: number;
@@ -64,7 +65,8 @@ export class NotFoundError extends Error {
  */
 export class SecureS3Store {
   private readonly s3Client: S3Client;
-  private readonly secretKey: Buffer;
+  private readonly keys: Map<string, Buffer>;
+  private readonly primaryKey: string;
   private readonly algorithm = 'aes-256-gcm';
   private readonly ivLength = 16;
   private readonly authTagLength = 16;
@@ -76,13 +78,30 @@ export class SecureS3Store {
    * @param config - The configuration object for the store.
    */
   constructor(private readonly config: SecureS3StoreConfig) {
-    // Validate secret key
-    if (!/^[0-9a-fA-F]{64}$/.test(config.secretKey)) {
+    if (!config.keys || Object.keys(config.keys).length === 0) {
       throw new ValidationError(
-        'Invalid secretKey: Must be a 64-character hex string.',
+        'At least one key must be provided in the `keys` configuration.',
       );
     }
-    this.secretKey = Buffer.from(config.secretKey, 'hex');
+
+    if (!config.primaryKey || !config.keys[config.primaryKey]) {
+      throw new ValidationError(
+        'The `primaryKey` must be a valid key identifier present in the `keys` configuration.',
+      );
+    }
+
+    this.keys = new Map();
+    for (const kid in config.keys) {
+      const secretKey = config.keys[kid];
+      if (!/^[0-9a-fA-F]{64}$/.test(secretKey)) {
+        throw new ValidationError(
+          `Invalid secretKey for KID "${kid}": Must be a 64-character hex string.`,
+        );
+      }
+      this.keys.set(kid, Buffer.from(secretKey, 'hex'));
+    }
+
+    this.primaryKey = config.primaryKey;
 
     // Initialize S3 Client
     this.s3Client = new S3Client({
@@ -108,15 +127,25 @@ export class SecureS3Store {
 
     this.validateInput(dataBuffer);
 
+    const secretKey = this.keys.get(this.primaryKey)!;
+    const kid = Buffer.from(this.primaryKey, 'utf8');
+    const kidLength = Buffer.from([kid.length]);
+
     const iv = randomBytes(this.ivLength);
-    const cipher = createCipheriv(this.algorithm, this.secretKey, iv);
+    const cipher = createCipheriv(this.algorithm, secretKey, iv);
     const encrypted = Buffer.concat([
       cipher.update(dataBuffer),
       cipher.final(),
     ]);
     const authTag = cipher.getAuthTag();
 
-    const finalPayload = Buffer.concat([iv, authTag, encrypted]);
+    const finalPayload = Buffer.concat([
+      kidLength,
+      kid,
+      iv,
+      authTag,
+      encrypted,
+    ]);
 
     const command = new PutObjectCommand({
       Bucket: bucket,
@@ -158,14 +187,24 @@ export class SecureS3Store {
       }
 
       const encryptedData = await this.streamToBuffer(Body as Readable);
-      const iv = encryptedData.slice(0, this.ivLength);
-      const authTag = encryptedData.slice(
-        this.ivLength,
-        this.ivLength + this.authTagLength,
-      );
-      const encrypted = encryptedData.slice(this.ivLength + this.authTagLength);
 
-      const decipher = createDecipheriv(this.algorithm, this.secretKey, iv);
+      const kidLength = encryptedData[0];
+      const kid = encryptedData.slice(1, 1 + kidLength).toString('utf8');
+      const secretKey = this.keys.get(kid);
+
+      if (!secretKey) {
+        throw new DecryptionError(`No secret key found for KID: ${kid}`);
+      }
+
+      const ivOffset = 1 + kidLength;
+      const authTagOffset = ivOffset + this.ivLength;
+      const encryptedOffset = authTagOffset + this.authTagLength;
+
+      const iv = encryptedData.slice(ivOffset, authTagOffset);
+      const authTag = encryptedData.slice(authTagOffset, encryptedOffset);
+      const encrypted = encryptedData.slice(encryptedOffset);
+
+      const decipher = createDecipheriv(this.algorithm, secretKey, iv);
       decipher.setAuthTag(authTag);
 
       const decrypted = Buffer.concat([
@@ -179,6 +218,9 @@ export class SecureS3Store {
       this.logger.error(`S3 GetObject failed for path: ${path}`, { error });
       if (error.name === 'NoSuchKey') {
         throw new NotFoundError(`Object not found at path: ${path}`);
+      }
+      if (error instanceof DecryptionError) {
+        throw error;
       }
       throw new S3Error(`S3 GetObject failed: ${error.message}`);
     }

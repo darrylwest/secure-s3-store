@@ -1,6 +1,11 @@
 // test/SecureS3Store.test.ts
 import { S3Client } from '@aws-sdk/client-s3';
-import { SecureS3Store, ValidationError } from '../src/SecureS3Store.js';
+import {
+  SecureS3Store,
+  ValidationError,
+  DecryptionError,
+} from '../src/SecureS3Store.js';
+import { Readable } from 'stream';
 
 jest.mock('@aws-sdk/client-s3');
 
@@ -18,7 +23,8 @@ describe('SecureS3Store', () => {
 
   it('should throw an S3Error when the delete operation fails', async () => {
     const store = new SecureS3Store({
-      secretKey: 'a'.repeat(64),
+      keys: { v1: 'a'.repeat(64) },
+      primaryKey: 'v1',
       s3Config: {},
     });
     mockSend.mockRejectedValue(new Error('S3 Error'));
@@ -29,12 +35,34 @@ describe('SecureS3Store', () => {
 
   it('should throw an S3Error when the list operation fails', async () => {
     const store = new SecureS3Store({
-      secretKey: 'a'.repeat(64),
+      keys: { v1: 'a'.repeat(64) },
+      primaryKey: 'v1',
       s3Config: {},
     });
     mockSend.mockRejectedValue(new Error('S3 Error'));
     await expect(store.list('my-bucket/my-folder/')).rejects.toThrow(
       'S3 ListObjectsV2 failed: S3 Error',
+    );
+  });
+
+  it('should throw a DecryptionError for an unknown KID', async () => {
+    const store = new SecureS3Store({
+      keys: { v1: 'a'.repeat(64) },
+      primaryKey: 'v1',
+      s3Config: {},
+    });
+
+    const kid = Buffer.from('v2', 'utf8');
+    const kidLength = Buffer.from([kid.length]);
+    const iv = Buffer.alloc(16, 0);
+    const authTag = Buffer.alloc(16, 0);
+    const encrypted = Buffer.from('encrypted-data');
+    const body = Buffer.concat([kidLength, kid, iv, authTag, encrypted]);
+
+    mockSend.mockResolvedValue({ Body: Readable.from(body) });
+
+    await expect(store.get('my-bucket/my-key')).rejects.toThrow(
+      DecryptionError,
     );
   });
 
