@@ -4,7 +4,7 @@ This file summarizes the key decisions and context for the `secure-s3-store` pro
 
 ## 1. Project Goal
 
-The primary goal is to create a Node.js/TypeScript npm package that provides a simple, file-system-like API for securely storing and retrieving encrypted data from S3-compatible object storage (like AWS S3 or DigitalOcean Spaces).  A secondary goal is to create a simple express REST API to run the S3 ops.
+The primary goal is to create a Node.js/TypeScript npm package that provides a simple, file-system-like API for securely storing and retrieving encrypted data from S3-compatible object storage (like AWS S3 or DigitalOcean Spaces).  A secondary goal is to create a simple express REST API to run the S3 ops as a stand-alone microservice.
 
 ## 2. Core API (from PRD)
 
@@ -24,7 +24,7 @@ The `path` string is always in the format `bucket-name/folder/filename.ext` wher
 *   **Encryption Scheme:** For each `put` operation, a new nonce will be generated. The final object stored in S3 will be a concatenation of `[nonce][encrypted_data]`.
 *   **S3 Interaction:** The official `@aws-sdk/client-s3` will be used. It is compatible with S3-like services (e.g., DigitalOcean Spaces) by configuring a custom `endpoint`.
 *   **Configuration:** The client will be initialized with a configuration object containing the `secretKey` (hex-encoded) and the S3 client configuration.
-*   **CLI tool** Although
+*   **CLI tool** The express CLI will read env vars from .env encryped by `dotenvx`.
 
 ## 4. Development & Scaffolding
 
