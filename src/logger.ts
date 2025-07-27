@@ -12,7 +12,7 @@ export interface LoggerConfig {
 
 export function configureLogger(config: LoggerConfig = {}): winston.Logger {
   const {
-    consoleLogLevel = 'info',
+    consoleLogLevel = 'error',
     fileLogLevel = 'info',
     logDir = 'logs',
   } = config;
@@ -24,7 +24,7 @@ export function configureLogger(config: LoggerConfig = {}): winston.Logger {
 
   const dailyRotateFileTransport = new winston.transports.DailyRotateFile({
     level: fileLogLevel,
-    filename: path.join(logDir, '%DATE%-results.log'),
+    filename: path.join(logDir, '%DATE%-solt-pipe.log'),
     datePattern: 'YYYY-MM-DD',
     zippedArchive: true,
     maxSize: '20m',

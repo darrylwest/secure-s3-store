@@ -7,4 +7,4 @@
 # Environment variables
 .env.keys
 
-logs/*
+logs/*.log
