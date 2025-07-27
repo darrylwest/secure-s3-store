@@ -10,11 +10,17 @@ const logger = configureLogger({
   fileLogLevel: 'info',
 });
 
+const keys: { [kid: string]: string } = {};
+if (process.env.KEY_V1) {
+  keys.v1 = process.env.KEY_V1;
+}
+if (process.env.KEY_V2) {
+  keys.v2 = process.env.KEY_V2;
+}
+
 const config: SecureS3StoreConfig = {
-  keys: {
-    v1: process.env.SALT_PIPE_KEY!,
-  },
-  primaryKey: 'v1',
+  keys,
+  primaryKey: process.env.PRIMARY_KEY || 'v1',
   s3Config: {
     endpoint: `https://sfo3.digitaloceanspaces.com`,
     region: 'sfo3',
