@@ -19,7 +19,7 @@ export interface SecureS3StoreConfig {
   s3Config: S3ClientConfig;
   logger?: winston.Logger;
   maxFileSize?: number;
-  requestHandler?: RequestHandler<any, any>;
+  requestHandler?: RequestHandler<unknown, unknown, object>;
 }
 
 export class ValidationError extends Error {
