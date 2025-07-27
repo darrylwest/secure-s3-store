@@ -1,8 +1,14 @@
 // e2e/e2e-test.ts
 
 import { SecureS3Store, SecureS3StoreConfig } from '../src/SecureS3Store.js';
+import { configureLogger } from '../src/logger.js';
 
 const BUCKET = process.env.BUCKET!;
+
+const logger = configureLogger({
+  consoleLogLevel: 'info',
+  fileLogLevel: 'info',
+});
 
 const config: SecureS3StoreConfig = {
   secretKey: process.env.SALT_PIPE_KEY!,
@@ -14,6 +20,7 @@ const config: SecureS3StoreConfig = {
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
     },
   },
+  logger,
 };
 
 const store = new SecureS3Store(config);

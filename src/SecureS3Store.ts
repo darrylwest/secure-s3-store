@@ -8,12 +8,15 @@ import {
   DeleteObjectCommand,
   ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
+import winston from 'winston';
+import logger from './logger.js';
 
 // -- Configuration and Error Types --
 
 export interface SecureS3StoreConfig {
   secretKey: string; // Hex-encoded 32-byte key (64 hex characters)
   s3Config: S3ClientConfig;
+  logger?: winston.Logger;
 }
 
 export class ValidationError extends Error {
@@ -52,6 +55,7 @@ export class SecureS3Store {
   private readonly algorithm = 'aes-256-gcm';
   private readonly ivLength = 16;
   private readonly authTagLength = 16;
+  private readonly logger: winston.Logger;
 
   constructor(private readonly config: SecureS3StoreConfig) {
     // Validate secret key
@@ -64,9 +68,12 @@ export class SecureS3Store {
 
     // Initialize S3 Client
     this.s3Client = new S3Client(config.s3Config);
+    this.logger = config.logger || logger;
+    this.logger.info('SecureS3Store initialized.');
   }
 
   async put(path: string, data: Buffer | string): Promise<void> {
+    this.logger.info(`Attempting to put object at path: ${path}`);
     const { bucket, key } = this.parsePath(path);
     const dataBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data, 'utf8');
 
@@ -76,7 +83,10 @@ export class SecureS3Store {
 
     const iv = randomBytes(this.ivLength);
     const cipher = createCipheriv(this.algorithm, this.secretKey, iv);
-    const encrypted = Buffer.concat([cipher.update(dataBuffer), cipher.final()]);
+    const encrypted = Buffer.concat([
+      cipher.update(dataBuffer),
+      cipher.final(),
+    ]);
     const authTag = cipher.getAuthTag();
 
     const finalPayload = Buffer.concat([iv, authTag, encrypted]);
@@ -89,13 +99,16 @@ export class SecureS3Store {
 
     try {
       await this.s3Client.send(command);
+      this.logger.info(`Successfully put object at path: ${path}`);
     } catch (err) {
       const error = err as Error;
+      this.logger.error(`S3 PutObject failed for path: ${path}`, { error });
       throw new S3Error(`S3 PutObject failed: ${error.message}`);
     }
   }
 
   async get(path: string): Promise<Buffer> {
+    this.logger.info(`Attempting to get object from path: ${path}`);
     const { bucket, key } = this.parsePath(path);
 
     const command = new GetObjectCommand({
@@ -111,17 +124,24 @@ export class SecureS3Store {
 
       const encryptedData = await this.streamToBuffer(Body as Readable);
       const iv = encryptedData.slice(0, this.ivLength);
-      const authTag = encryptedData.slice(this.ivLength, this.ivLength + this.authTagLength);
+      const authTag = encryptedData.slice(
+        this.ivLength,
+        this.ivLength + this.authTagLength,
+      );
       const encrypted = encryptedData.slice(this.ivLength + this.authTagLength);
 
       const decipher = createDecipheriv(this.algorithm, this.secretKey, iv);
       decipher.setAuthTag(authTag);
 
-      const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
-
+      const decrypted = Buffer.concat([
+        decipher.update(encrypted),
+        decipher.final(),
+      ]);
+      this.logger.info(`Successfully got object from path: ${path}`);
       return decrypted;
     } catch (err) {
       const error = err as Error;
+      this.logger.error(`S3 GetObject failed for path: ${path}`, { error });
       if (error.name === 'NoSuchKey') {
         throw new NotFoundError(`Object not found at path: ${path}`);
       }
@@ -130,6 +150,7 @@ export class SecureS3Store {
   }
 
   async delete(path: string): Promise<void> {
+    this.logger.info(`Attempting to delete object at path: ${path}`);
     const { bucket, key } = this.parsePath(path);
 
     const command = new DeleteObjectCommand({
@@ -139,8 +160,10 @@ export class SecureS3Store {
 
     try {
       await this.s3Client.send(command);
+      this.logger.info(`Successfully deleted object at path: ${path}`);
     } catch (err) {
       const error = err as Error;
+      this.logger.error(`S3 DeleteObject failed for path: ${path}`, { error });
       throw new S3Error(`S3 DeleteObject failed: ${error.message}`);
     }
   }
@@ -151,6 +174,7 @@ export class SecureS3Store {
     limit = 1000,
     recursive = false,
   ): Promise<string[]> {
+    this.logger.info(`Attempting to list objects at path: ${path}`);
     const { bucket, key: prefix } = this.parsePath(path);
     const allKeys: string[] = [];
     let continuationToken: string | undefined;
@@ -174,9 +198,13 @@ export class SecureS3Store {
         continuationToken = response.NextContinuationToken;
       } while (continuationToken);
 
+      this.logger.info(
+        `Successfully listed ${allKeys.length} objects at path: ${path}`,
+      );
       return allKeys.slice(offset, offset + limit);
     } catch (err) {
       const error = err as Error;
+      this.logger.error(`S3 ListObjectsV2 failed for path: ${path}`, { error });
       throw new S3Error(`S3 ListObjectsV2 failed: ${error.message}`);
     }
   }
