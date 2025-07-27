@@ -13,7 +13,7 @@
     "format": "prettier --write .",
     "test": "jest",
     "start": "ts-node src/index.ts",
-    "e2e": "dotenvx run -- ts-node e2e/e2e-test.ts"
+    "e2e": "dotenvx run -- node --loader ts-node/esm e2e/e2e-test.ts"
   },
   "repository": {
     "type": "git",

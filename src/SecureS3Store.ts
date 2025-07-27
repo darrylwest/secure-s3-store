@@ -50,7 +50,7 @@ export class SecureS3Store {
   private readonly s3Client: S3Client;
   private readonly secretKey: Buffer;
 
-  constructor(private readonly config: SecureS3StoreConfig) {
+  private constructor(private readonly config: SecureS3StoreConfig) {
     // Validate secret key
     if (!/^[0-9a-fA-F]{64}$/.test(config.secretKey)) {
       throw new ValidationError(
@@ -63,9 +63,12 @@ export class SecureS3Store {
     this.s3Client = new S3Client(config.s3Config);
   }
 
-  async put(path: string, data: Buffer | string): Promise<void> {
+  static async create(config: SecureS3StoreConfig): Promise<SecureS3Store> {
     await libsodium.ready;
+    return new SecureS3Store(config);
+  }
 
+  async put(path: string, data: Buffer | string): Promise<void> {
     const { bucket, key } = this.parsePath(path);
     const dataBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data, 'utf8');
 
@@ -101,8 +104,6 @@ export class SecureS3Store {
   }
 
   async get(path: string): Promise<Buffer> {
-    await libsodium.ready;
-
     const { bucket, key } = this.parsePath(path);
 
     const command = new GetObjectCommand({
