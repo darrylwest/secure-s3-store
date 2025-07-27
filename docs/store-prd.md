@@ -92,7 +92,7 @@ class SecureS3Store {
   put(path: string, data: Buffer | string): Promise<void>;
   get(path: string): Promise<Buffer>;
   delete(path: string): Promise<void>;
-  list(path: string, recursive?: boolean): Promise<string[]>;
+  list(path: string, offset: int = 0, limit: int = 1000, recursive?: boolean): Promise<string[]>;
 }
 ```
 
@@ -211,9 +211,9 @@ await store.delete('my-bucket/configs/old-config.json');
 
 ### 7.4 Testing Requirements
 
-- Unit tests for all cryptographic operations
+- Unit tests for all cryptographic operations (**after e2e tests are complete**)
 - Mocked integration tests for S3 operations
-- End-to-end tests with real S3 service (optional)
+- End-to-end tests with real S3 service (**we will do this first**)
 - Test coverage minimum: 90%
 - Performance benchmarks for encrypt/decrypt operations
 

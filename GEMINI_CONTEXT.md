@@ -13,7 +13,7 @@ The package will expose a `SecureS3Store` class with the following methods:
 *   `put(path: string, data: Buffer | string): Promise<void>`: Encrypts and uploads data.
 *   `get(path: string): Promise<Buffer>`: Downloads and decrypts data.
 *   `delete(path: string): Promise<void>`: Deletes an object.
-*   `list(path: string, recursive: boolean = true): Promise<string[]>`: Lists objects in a "folder."
+*   `list(path: string, offset: int = 0, limit: int = 1000, recursive: boolean = false): Promise<string[]>`: Lists objects in a "folder."
 
 The `path` string is always in the format `bucket-name/folder/filename.ext` where bucket-name is usually stored in .env properites file.
 
@@ -23,7 +23,6 @@ The `path` string is always in the format `bucket-name/folder/filename.ext` wher
 *   **Encryption Scheme:** For each `put` operation, a new nonce will be generated. The final object stored in S3 will be a concatenation of `[nonce][encrypted_data]`.
 *   **S3 Interaction:** The official `@aws-sdk/client-s3` will be used. It is compatible with S3-like services (e.g., DigitalOcean Spaces) by configuring a custom `endpoint`.
 *   **Configuration:** The client will be initialized with a configuration object containing the `secretKey` (hex-encoded) and the S3 client configuration.
-*   **CLI tool** The express CLI will read env vars from .env encryped by `dotenvx`.
 
 ## 4. Development & Scaffolding
 
