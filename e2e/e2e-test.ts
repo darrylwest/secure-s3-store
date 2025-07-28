@@ -38,8 +38,10 @@ async function main() {
   console.log('Starting e2e test for SecureS3Store...');
 
   try {
-    const testData = `Hello, world! This is a test. ${new Date().toISOString()}`;
-    const testPath = `${BUCKET}/test-folder/test-file.txt`;
+    const folder = "system";
+    const filename = "e2e-test-file.txt";
+    const testData = `Hello, world! aabbccddeeffgghhrrlzz This is a new test. ${new Date().toISOString()}`;
+    const testPath = `${BUCKET}/${folder}/${filename}`;
     const testDataBuffer = Buffer.from(testData, 'utf8');
 
     // 1. Put
@@ -50,15 +52,16 @@ async function main() {
     // 2. Get
     console.log(`Getting data from ${testPath}...`);
     const retrievedData = await store.get(testPath);
+
     if (!retrievedData.equals(testDataBuffer)) {
       throw new Error('Retrieved data does not match original data.');
     }
-    console.log('Get successful and data verified.');
+    console.log(`Get successful and data verified: ${retrievedData}`);
 
     // 3. List
     console.log('Listing objects...');
-    const files = await store.list(`${BUCKET}/test-folder/`);
-    if (!files.includes('test-folder/test-file.txt')) {
+    const files = await store.list(`${BUCKET}/${folder}/`);
+    if (!files.includes(`${folder}/${filename}`)) {
       throw new Error('List does not contain the uploaded file.');
     }
     console.log('List successful and file found.');
