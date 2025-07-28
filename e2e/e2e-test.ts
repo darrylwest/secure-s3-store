@@ -22,8 +22,8 @@ const config: SecureS3StoreConfig = {
   keys,
   primaryKey: process.env.PRIMARY_KEY || 'v1',
   s3Config: {
-    endpoint: `https://sfo3.digitaloceanspaces.com`,
-    region: 'sfo3',
+    endpoint: process.env.S3_ENDPOINT,
+    region: process.env.S3_REGION,
     credentials: {
       accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
