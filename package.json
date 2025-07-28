@@ -20,7 +20,7 @@
     "test": "jest",
     "test:cov": "jest --coverage",
     "start": "ts-node src/index.ts",
-    "e2e": "dotenvx run -- node --loader ts-node/esm e2e/e2e-test.ts",
+    "e2e": "dotenvx run -- node --no-deprecation --import ./loader.mjs e2e/e2e-test.ts",
     "all": "npm run clean && npm run build && npm run format && npm run lint && npm run test:cov"
   },
   "repository": {
