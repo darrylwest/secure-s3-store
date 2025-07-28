@@ -4,21 +4,21 @@
   "description": "a secure way to store s3 files",
   "exports": {
     ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     },
     "./logger": {
-      "types": "./dist/src/logger.d.ts", 
-      "import": "./dist/src/logger.js"
+      "types": "./dist/logger.d.ts", 
+      "import": "./dist/logger.js"
     }
   },
   "files": [
-    "dist/src/**/*",
+    "dist/**/*",
     "README.md",
     "LICENSE"
   ],
-  "main": "./dist/src/index.js",
-  "types": "./dist/src/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "directories": {
     "doc": "docs"
   },

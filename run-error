@@ -1,0 +1,13 @@
+node:internal/modules/run_main:105
+    triggerUncaughtException(
+    ^
+Error: Cannot find package '/Users/dpw/raincity/node-projects/secure-s3-backup/node_modules/secure-s3-store/' imported from /Users/dpw/raincity/node-projects/secure-s3-backup/dist/index.js
+    at legacyMainResolve (/Users/dpw/raincity/node-projects/secure-s3-backup/node_modules/ts-node/dist-raw/node-internal-modules-esm-resolve.js:286:9)
+    at packageResolve (/Users/dpw/raincity/node-projects/secure-s3-backup/node_modules/ts-node/dist-raw/node-internal-modules-esm-resolve.js:750:14)
+    at moduleResolve (/Users/dpw/raincity/node-projects/secure-s3-backup/node_modules/ts-node/dist-raw/node-internal-modules-esm-resolve.js:798:18)
+    at Object.defaultResolve (/Users/dpw/raincity/node-projects/secure-s3-backup/node_modules/ts-node/dist-raw/node-internal-modules-esm-resolve.js:912:11)
+    at /Users/dpw/raincity/node-projects/secure-s3-backup/node_modules/ts-node/src/esm.ts:218:35
+    at entrypointFallback (/Users/dpw/raincity/node-projects/secure-s3-backup/node_modules/ts-node/src/esm.ts:168:34)
+    at /Users/dpw/raincity/node-projects/secure-s3-backup/node_modules/ts-node/src/esm.ts:217:14
+    at addShortCircuitFlag (/Users/dpw/raincity/node-projects/secure-s3-backup/node_modules/ts-node/src/esm.ts:409:21)
+    at resolve (/Users/dpw/raincity/node-projects/secure-s3-backup/node_modules/ts-node/src/esm.ts:197:12)
