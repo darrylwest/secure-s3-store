@@ -12,7 +12,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "clean": "rm -rf dist logs/*.log",
+    "clean": "rm -rf dist coverage tmp e2e/**/*.js e2e/**/*.js.map e2e/**/*.d.ts logs/*.log logs/*.json",
     "build": "tsc",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -52,7 +52,6 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.3",
     "jest": "^30.0.5",
-    "jest-mock-extended": "^4.0.0",
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",

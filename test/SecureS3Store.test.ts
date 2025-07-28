@@ -21,6 +21,38 @@ describe('SecureS3Store', () => {
     }));
   });
 
+  it('should put and get a value', async () => {
+    const store = new SecureS3Store({
+      keys: { v1: 'a'.repeat(64) },
+      primaryKey: 'v1',
+      s3Config: {},
+    });
+
+    const originalData = 'Hello, Secure World!';
+    const path = 'my-bucket/my-key';
+
+    // Mock the put operation
+    mockSend.mockResolvedValueOnce({});
+
+    await store.put(path, originalData);
+
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const putCommand = mockSend.mock.calls[0][0];
+    expect(putCommand.input.Bucket).toBe('my-bucket');
+    expect(putCommand.input.Key).toBe('my-key.enc');
+
+    // The body is a buffer with kid, iv, authTag, and encrypted data.
+    // We can't easily decrypt it here, so we'll just check that it's a buffer.
+    expect(putCommand.input.Body).toBeInstanceOf(Buffer);
+
+    // Mock the get operation
+    const bodyStream = Readable.from(putCommand.input.Body);
+    mockSend.mockResolvedValueOnce({ Body: bodyStream });
+
+    const retrievedData = await store.get(path);
+    expect(retrievedData.toString('utf8')).toBe(originalData);
+  });
+
   it('should throw an S3Error when the delete operation fails', async () => {
     const store = new SecureS3Store({
       keys: { v1: 'a'.repeat(64) },
@@ -64,6 +96,49 @@ describe('SecureS3Store', () => {
     await expect(store.get('my-bucket/my-key')).rejects.toThrow(
       DecryptionError,
     );
+  });
+
+  it('should delete a value', async () => {
+    const store = new SecureS3Store({
+      keys: { v1: 'a'.repeat(64) },
+      primaryKey: 'v1',
+      s3Config: {},
+    });
+    const path = 'my-bucket/my-key';
+
+    mockSend.mockResolvedValueOnce({});
+
+    await store.delete(path);
+
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const deleteCommand = mockSend.mock.calls[0][0];
+    expect(deleteCommand.input.Bucket).toBe('my-bucket');
+    expect(deleteCommand.input.Key).toBe('my-key.enc');
+  });
+
+  it('should list values', async () => {
+    const store = new SecureS3Store({
+      keys: { v1: 'a'.repeat(64) },
+      primaryKey: 'v1',
+      s3Config: {},
+    });
+    const path = 'my-bucket/my-folder/';
+
+    const s3Objects = {
+      Contents: [
+        { Key: 'my-folder/file1.txt.enc' },
+        { Key: 'my-folder/file2.txt.enc' },
+      ],
+    };
+    mockSend.mockResolvedValueOnce(s3Objects);
+
+    const result = await store.list(path);
+
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const listCommand = mockSend.mock.calls[0][0];
+    expect(listCommand.input.Bucket).toBe('my-bucket');
+    expect(listCommand.input.Prefix).toBe('my-folder/');
+    expect(result).toEqual(['my-folder/file1.txt', 'my-folder/file2.txt']);
   });
 
   describe('parsePath', () => {
