@@ -36,7 +36,15 @@ import { SecureS3Store, SecureS3StoreConfig } from 'secure-s3-store';
 async function main() {
   // Configuration for the store
   const config: SecureS3StoreConfig = {
-    secretKey: process.env.SALT_PIPE_KEY!, // Your 64-character hex-encoded secret key
+    // Provide one or more encryption keys.
+    // Each key must be a 64-character hex-encoded string.
+    keys: {
+      'key1': process.env.ENCRYPTION_KEY_1!,
+      // You can add more keys here for rotation
+      // 'key2': process.env.ENCRYPTION_KEY_2!,
+    },
+    // Specify which key to use for new encryptions.
+    primaryKey: 'key1',
     s3Config: {
       endpoint: 'https://sfo3.digitaloceanspaces.com', // e.g., for DigitalOcean
       region: 'sfo3',
